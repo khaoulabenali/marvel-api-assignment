@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import random
 
+
 def get_comics_count_from_characters(
     character_name: str, limit: int
 ) -> Union[pl.DataFrame, Dict[str, str]]:
@@ -395,8 +396,9 @@ def aggregate_comics_results(
         )
 
 
-
-def plot_comics_count_bar_graph(comics_data: List[dict], character_name: Optional[str]) -> BytesIO:
+def plot_comics_count_bar_graph(
+    comics_data: List[dict], character_name: Optional[str] = None
+) -> BytesIO:
     """
     Generates a vertical bar graph representing comics count per character.
 
@@ -406,41 +408,114 @@ def plot_comics_count_bar_graph(comics_data: List[dict], character_name: Optiona
 
     Returns:
         BytesIO: A buffer containing the generated image in PNG format.
+
+    Raises:
+        ValueError: If comics_data is empty or contains invalid data.
+        Exception: For unexpected errors during processing or plotting.
     """
-    # Sort the comics data by comics count in descending order
-    comics_data_sorted = sorted(comics_data, key=lambda x: x["comics_count"], reverse=True)
-    
-    # Extract sorted character names and comics counts
-    characters = [data["character_name"] for data in comics_data_sorted]
-    comics_count = [data["comics_count"] for data in comics_data_sorted]
+    try:
+        # Validate the comics_data list
+        if not comics_data or not all(
+            isinstance(d, dict) and "character_name" in d and "comics_count" in d
+            for d in comics_data
+        ):
+            raise ValueError(
+                "Invalid comics data. Each entry must be a dictionary with 'character_name' and 'comics_count' keys."
+            )
 
-    # Generate distinct colors for each character
-    colors = [f"#{random.randint(0, 0xFFFFFF):06x}" for _ in range(len(characters))]
+        # Filter data by character name if provided
+        if character_name:
+            comics_data = [
+                data for data in comics_data if data["character_name"] == character_name
+            ]
+            if not comics_data:
+                raise ValueError(f"No data found for character '{character_name}'.")
 
-    # Create a vertical bar chart using Matplotlib
-    fig, ax = plt.subplots(figsize=(12, 6))
+        # Sort the comics data by comics count in descending order
+        comics_data_sorted = sorted(
+            comics_data, key=lambda x: x["comics_count"], reverse=True
+        )
 
-    # Plot bars with colors and indexes
-    bars = ax.bar(range(len(comics_count)), comics_count, color=colors)
-    
-    # Set labels and title
-    ax.set_xlabel("Character Index")
-    ax.set_ylabel("Comics Count")
-    ax.set_title(f"Comics Count per Character")
+        # Extract sorted character names and comics counts
+        characters = [data["character_name"] for data in comics_data_sorted]
+        comics_count = [data["comics_count"] for data in comics_data_sorted]
 
-    # Add the character names in a separate box to the right of the chart
-    ax.legend(
-        bars,
-        characters,
-        loc='upper left',
-        bbox_to_anchor=(1, 1),
-        title="Character Names",
-        frameon=False,
-    )
+        # Generate distinct colors for each character
+        colors = [f"#{random.randint(0, 0xFFFFFF):06x}" for _ in range(len(characters))]
 
-    # Save the plot to a BytesIO buffer and return as an image
-    buf = BytesIO()
-    plt.tight_layout()  # Ensure the layout fits well with the legend box
-    plt.savefig(buf, format="png")
-    buf.seek(0)
-    return buf
+        # Create a vertical bar chart using Matplotlib
+        fig, ax = plt.subplots(figsize=(12, 6))
+
+        # Plot bars with colors and indexes
+        bars = ax.bar(range(len(comics_count)), comics_count, color=colors)
+
+        # Set labels and title
+        ax.set_xlabel("Character Index")
+        ax.set_ylabel("Comics Count")
+        ax.set_title(f"Comics Count per Character")
+
+        # Add the character names in a separate box to the right of the chart
+        ax.legend(
+            bars,
+            characters,
+            loc="upper left",
+            bbox_to_anchor=(1, 1),
+            title="Character Names",
+            frameon=False,
+        )
+
+        # Save the plot to a BytesIO buffer and return as an image
+        buf = BytesIO()
+        plt.tight_layout()  # Ensure the layout fits well with the legend box
+        plt.savefig(buf, format="png")
+        buf.seek(0)
+        plt.close(fig)  # Close the figure to free up memory
+        return buf
+
+    except ValueError as ve:
+        print(f"ValueError: {ve}")
+        raise
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        raise
+
+
+def get_comics_count_visualization_from_comics(
+    character_name: Optional[str] = None,
+) -> BytesIO:
+    """
+    Generates a visualization of comics count for a character or all characters.
+
+    Args:
+        character_name (str, optional): The character name to filter the data. If None, data for all characters is used.
+
+    Returns:
+        BytesIO: A buffer containing the generated image in PNG format.
+
+    Raises:
+        ValueError: If no data is found for the given character or if comics data is invalid.
+        Exception: For unexpected errors during data retrieval or visualization.
+    """
+    try:
+        # Fetch comics data
+        comics_data = get_comics_count_from_comics(character_name)
+
+        # Filter data by character name if provided
+        if character_name:
+            comics_data = [
+                data
+                for data in comics_data
+                if data["character_name"].lower() == character_name.lower()
+            ]
+
+        # Call the utility function to plot the bar chart
+        buf = plot_comics_count_bar_graph(comics_data, character_name)
+
+        return buf
+
+    except ValueError as ve:
+        print(f"ValueError: {ve}")
+        raise
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        raise

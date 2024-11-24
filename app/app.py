@@ -1,4 +1,8 @@
-from app.utils import get_comics_count_from_characters, get_comics_count_from_comics, plot_comics_count_bar_graph
+from app.utils import (
+    get_comics_count_from_characters,
+    get_comics_count_from_comics,
+    plot_comics_count_bar_graph,
+)
 from fastapi import FastAPI, HTTPException, Query
 from typing import List, Optional
 from app.models import CharacterComicsData
@@ -13,7 +17,7 @@ app = FastAPI()
 
 
 @app.get(
-    "/api/characters/comics-counts/from-characters", 
+    "/api/characters/comics-counts/from-characters",
     response_model=List[CharacterComicsData],
     description=(
         "Fetch the count of distinct comics in which a character appears. "
@@ -28,12 +32,12 @@ app = FastAPI()
         "```json\n"
         "[\n"
         "    {\n"
-        "        \"character_name\": \"Spider-Man\",\n"
-        "        \"comics_count\": 500\n"
+        '        "character_name": "Spider-Man",\n'
+        '        "comics_count": 500\n'
         "    },\n"
         "    {\n"
-        "        \"character_name\": \"Iron Man\",\n"
-        "        \"comics_count\": 400\n"
+        '        "character_name": "Iron Man",\n'
+        '        "comics_count": 400\n'
         "    }\n"
         "]\n"
         "```"
@@ -44,17 +48,11 @@ app = FastAPI()
             "content": {
                 "application/json": {
                     "example": [
-                        {
-                            "character_name": "Spider-Man",
-                            "comics_count": 500
-                        },
-                        {
-                            "character_name": "Iron Man",
-                            "comics_count": 400
-                        }
+                        {"character_name": "Spider-Man", "comics_count": 500},
+                        {"character_name": "Iron Man", "comics_count": 400},
                     ]
                 }
-            }
+            },
         },
         500: {
             "description": "Internal server error. Indicates an issue with the data fetching process.",
@@ -64,13 +62,15 @@ app = FastAPI()
                         "detail": "An unexpected error occurred during processing."
                     }
                 }
-            }
-        }
-    }
+            },
+        },
+    },
 )
 def get_data_from_characters(
     character_name: Optional[str] = Query(None, description="Filter by character name"),
-    limit: Optional[int] = Query(None, description="Limit the number of results returned")
+    limit: Optional[int] = Query(
+        None, description="Limit the number of results returned"
+    ),
 ):
     """
     Fetches the count of distinct comics in which a character appears.
@@ -106,7 +106,7 @@ def get_data_from_characters(
 
 
 @app.get(
-    "/api/characters/comics-counts/from-comics", 
+    "/api/characters/comics-counts/from-comics",
     response_model=List[CharacterComicsData],
     description=(
         "Fetch the count of distinct comics for characters, based on comic data, "
@@ -119,12 +119,12 @@ def get_data_from_characters(
         "```json\n"
         "[\n"
         "    {\n"
-        "        \"character_name\": \"Wolverine\",\n"
-        "        \"comics_count\": 300\n"
+        '        "character_name": "Wolverine",\n'
+        '        "comics_count": 300\n'
         "    },\n"
         "    {\n"
-        "        \"character_name\": \"Thor\",\n"
-        "        \"comics_count\": 250\n"
+        '        "character_name": "Thor",\n'
+        '        "comics_count": 250\n'
         "    }\n"
         "]\n"
         "```"
@@ -135,17 +135,11 @@ def get_data_from_characters(
             "content": {
                 "application/json": {
                     "example": [
-                        {
-                            "character_name": "Wolverine",
-                            "comics_count": 300
-                        },
-                        {
-                            "character_name": "Thor",
-                            "comics_count": 250
-                        }
+                        {"character_name": "Wolverine", "comics_count": 300},
+                        {"character_name": "Thor", "comics_count": 250},
                     ]
                 }
-            }
+            },
         },
         500: {
             "description": "Internal server error. Indicates an issue with the data fetching process.",
@@ -155,9 +149,9 @@ def get_data_from_characters(
                         "detail": "An unexpected error occurred during processing."
                     }
                 }
-            }
-        }
-    }
+            },
+        },
+    },
 )
 def get_data_from_comics(
     character_name: Optional[str] = Query(None, description="Filter by character name")
@@ -166,7 +160,7 @@ def get_data_from_comics(
     Fetches the count of distinct comics for characters based on comic data.
 
     - **character_name**: Optionally filter by a specific character name (e.g., "Wolverine").
-    
+
     ### Example Input:
     - `character_name`: "Wolverine"
 
@@ -194,7 +188,9 @@ def get_data_from_comics(
 
 
 @app.get("/visualize/comics-counts")
-def visualize_comics_counts(character_name: Optional[str] = Query(None, description="Filter by character name")):
+def visualize_comics_counts(
+    character_name: Optional[str] = Query(None, description="Filter by character name")
+):
     """
     Fetches and visualizes the count of distinct comics for characters, sorted by the number of comics.
 
@@ -205,7 +201,7 @@ def visualize_comics_counts(character_name: Optional[str] = Query(None, descript
 
     Query Parameters:
     - character_name: (Optional) Filter by character name (case-insensitive).
-    
+
     Example Request:
     GET /visualize/comics-counts?character_name=Spider-Man
 
@@ -216,9 +212,13 @@ def visualize_comics_counts(character_name: Optional[str] = Query(None, descript
     """
     # Sample data: Replace this with actual data from your primary app or database
     comics_data = get_comics_count_from_comics(character_name)
-    
+
     if character_name:
-        comics_data = [data for data in comics_data if data["character_name"].lower() == character_name.lower()]
+        comics_data = [
+            data
+            for data in comics_data
+            if data["character_name"].lower() == character_name.lower()
+        ]
 
     # Call the utility function to plot the bar chart
     buf = plot_comics_count_bar_graph(comics_data, character_name)
